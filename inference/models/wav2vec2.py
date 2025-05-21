@@ -2,87 +2,79 @@ from transformers import AutoFeatureExtractor, TFAutoModelForAudioClassification
 import os
 import librosa
 import numpy as np
-import tensorflow as tf # Import TensorFlow
+import tensorflow as tf
 
-# Make sure id2label is defined from your training setup
-# Example: id2label = {0: 'diffwave', 1: 'gt', ...}
+class Wav2Vec2SpoofDetector:
+    def __init__(self, model_name='ronanhansel/wav2vec2-vocoder-ft', feature_extractor_checkpoint="facebook/wav2vec2-base"):
+        self.model = TFAutoModelForAudioClassification.from_pretrained(model_name)
+        self.feature_extractor = AutoFeatureExtractor.from_pretrained(feature_extractor_checkpoint)
+        self.class_names = ['diffwave', 'gt', 'melgan', 'parallel_wave_gan', 'wavegrad', 'wavenet', 'wavernn']
+        self.label2id = {name: i for i, name in enumerate(self.class_names)}
+        self.id2label = {i: name for name, i in self.label2id.items()}
+        self.real_label = 'gt'  # 'gt' is considered real
 
-loaded_model = TFAutoModelForAudioClassification.from_pretrained('ronanhansel/wav2vec2-vocoder-ft')
-# Example: 7 classes (1 real + 6 vocoders)
-num_labels = 7
-model_checkpoint = "facebook/wav2vec2-base" # Or other variants like large
+    def forward(self, file_path):
+        target_sr = 16000
+        max_duration_s = 4.0
+        max_length = int(target_sr * max_duration_s)
 
-feature_extractor = AutoFeatureExtractor.from_pretrained(model_checkpoint)
-class_names = ['diffwave', 'gt', 'melgan', 'parallel_wave_gan', 'wavegrad', 'wavenet', 'wavernn']
-label2id = {name: i for i, name in enumerate(class_names)}
-id2label = {i: name for name, i in label2id.items()}
+        try:
+            audio, sr = librosa.load(file_path, sr=target_sr)
+            inputs = self.feature_extractor(
+                audio,
+                sampling_rate=self.feature_extractor.sampling_rate,
+                max_length=max_length,
+                truncation=True,
+                padding='max_length',
+                return_attention_mask=True,
+                return_tensors="np"
+            )
 
-def classify_audio(model, file_path, feature_extractor, id2label):
-    """Classifies an audio file using the provided TF Wav2Vec2 model."""
-    target_sr = 16000
-    max_duration_s = 4.0
-    max_length = int(target_sr * max_duration_s)
+            input_values_np = inputs["input_values"].squeeze()
+            if input_values_np.ndim == 0:
+                input_values_np = np.zeros(max_length)
+            elif input_values_np.ndim > 1:
+                input_values_np = np.squeeze(input_values_np)
 
-    try:
-        # 1. Load and Resample Audio
-        audio, sr = librosa.load(file_path, sr=target_sr) # Ensure loading at target SR
+            input_values = tf.constant(np.expand_dims(input_values_np, axis=0), dtype=tf.float32)
 
-        # 2. Extract Features
-        inputs = feature_extractor(
-            audio,
-            sampling_rate=feature_extractor.sampling_rate,
-            max_length=max_length,
-            truncation=True,
-            padding='max_length',
-            return_attention_mask=True,
-            return_tensors="np" # Get numpy arrays first
-        )
+            attention_mask_np = inputs["attention_mask"].squeeze()
+            if attention_mask_np.ndim == 0:
+                attention_mask_np = np.ones(max_length)
+            elif attention_mask_np.ndim > 1:
+                attention_mask_np = np.squeeze(attention_mask_np)
 
-        # 3. Prepare Tensors for TF Model
-        # Ensure input_values is 1D before adding batch dim, then convert to TF Tensor
-        input_values_np = inputs["input_values"].squeeze() # Remove any extra dims if present
-        if input_values_np.ndim == 0: # Handle potential scalar case if audio is empty/too short after processing
-             input_values_np = np.zeros(max_length) # Pad if necessary
-        elif input_values_np.ndim > 1:
-             print(f"Warning: input_values had unexpected ndim {input_values_np.ndim}, squeezing.")
-             input_values_np = np.squeeze(input_values_np)
+            attention_mask = tf.constant(np.expand_dims(attention_mask_np, axis=0), dtype=tf.int32)
 
+            logits = self.model(input_values, attention_mask=attention_mask).logits
+            predicted_class_id = int(tf.argmax(logits, axis=-1)[0].numpy())
+            predicted_label = self.id2label.get(predicted_class_id, "Unknown")
 
-        input_values = tf.constant(np.expand_dims(input_values_np, axis=0), dtype=tf.float32)
+            # Return True if fake (not 'gt'), False if real ('gt')
+            return predicted_label != self.real_label
 
-        # Ensure attention_mask is 1D before adding batch dim, then convert to TF Tensor
-        attention_mask_np = inputs["attention_mask"].squeeze()
-        if attention_mask_np.ndim == 0:
-             attention_mask_np = np.ones(max_length) # Pad if necessary
-        elif attention_mask_np.ndim > 1:
-             print(f"Warning: attention_mask had unexpected ndim {attention_mask_np.ndim}, squeezing.")
-             attention_mask_np = np.squeeze(attention_mask_np)
+        except Exception as e:
+            print(f"Error classifying {file_path}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
-        attention_mask = tf.constant(np.expand_dims(attention_mask_np, axis=0), dtype=tf.int32) # TF expects int32/64
+# Example usage:
+# detector = Wav2Vec2SpoofDetector()
+# file_path = input("Enter the path to the audio file: ")
+# is_fake = detector.forward(file_path)
+# print(f"Is fake: {is_fake}")
 
-        # --- Debugging: Check Shape ---
-        print(f"Shape passed to model - input_values: {input_values.shape}, attention_mask: {attention_mask.shape}")
-        # Expected shape: (1, 64000) for both
+# ...existing code...
 
-        # 4. Model Inference
-        # Pass tensors to the model
-        logits = model(input_values, attention_mask=attention_mask).logits
-
-        # 5. Get Prediction
-        predicted_class_id = int(tf.argmax(logits, axis=-1)[0].numpy())
-        predicted_label = id2label.get(predicted_class_id, "Unknown") # Use .get for safety
-
-        return predicted_label
-
-    except Exception as e:
-        print(f"Error classifying {file_path}: {e}")
-        # You might want to print the full traceback for more detailed debugging
-        import traceback
-        traceback.print_exc()
-        return None
-
-
-file_path = input("Enter the path to the audio file: ")
-
-predicted_label = classify_audio(loaded_model, file_path, feature_extractor, id2label)
-print(f"Predicted label: {predicted_label}")
+if __name__ == "__main__":
+    detector = Wav2Vec2SpoofDetector()
+    file_path = 'dataset/fake/26_496_000021_000003_gen.wav'
+    result = detector.forward(file_path)
+    if result is None:
+        print("Classification failed.")
+    elif result:
+        print("The audio is classified as FAKE.")
+    else:
+        print("The audio is classified as REAL.")
+# ...existing code...
