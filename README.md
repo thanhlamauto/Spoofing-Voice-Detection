@@ -42,3 +42,28 @@ This dataset provides a collection of genuine and spoofed voice samples, essenti
 To set up and run the project locally, follow these steps:
 
 1. **Clone the repository:**
+
+
+## Inference
+
+🔧 Command Format
+
+python infer.py --model <model_name> --num_files <N> --batch_size <B>
+
+✅ Example
+
+python infer.py --model xgboost --num_files 32 --batch_size 8
+
+🧠 Model Options
+
+1. gmm – LFCC + GMM model
+
+2. cnn – Mel-spectrogram CNN
+
+3. xgboost – XGBoost-based classifier
+
+4. wav2vec – Pretrained Wav2Vec2 model
+
+📌 Notes
+
+Test dataset size is 220
