@@ -26,15 +26,15 @@ This dataset provides a collection of genuine and spoofed voice samples, essenti
 
 (Details on the five specific methods will be added here by the project team. For example, you might list:
 
-1. **Method 1: [Brief Description, e.g., MFCC + SVM]**
+1. **Method 1: [MFCC + SVM]**
 
-2. **Method 2: [Brief Description, e.g., CNN-based approach]**
+2. **Method 2: [CNN-based approach]**
 
-3. **Method 3: [Brief Description, e.g., Spectrogram analysis with RNN]**
+3. **Method 3: [Spectrogram analysis with RNN]**
 
-4. **Method 4: [Brief Description, e.g., Deep learning with raw audio]**
+4. **Method 4: [ Deep learning with raw audio]**
 
-5. **Method 5: [Brief Description, e.g., Feature engineering with GMM]**
+5. **Method 5: [Feature engineering with GMM]**
    )
 
 ## Getting Started
