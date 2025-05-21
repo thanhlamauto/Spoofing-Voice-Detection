@@ -1,6 +1,6 @@
 import os
 from torch.utils.data import Dataset, DataLoader, Subset
-from models import LFCCGMMClassifier, MelCNNClassifier, XGBoostClassifier, Wav2Vec2Classifier
+from .models import LFCCGMMClassifier, MelCNNClassifier, XGBoostClassifier, Wav2Vec2Classifier
 from sklearn.metrics import classification_report
 import random
 

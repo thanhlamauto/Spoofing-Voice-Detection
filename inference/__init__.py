@@ -1,1 +1,1 @@
-from .utils import *
+from .utils import test_model
