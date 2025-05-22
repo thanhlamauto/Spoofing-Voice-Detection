@@ -27,7 +27,7 @@ def reduce_noise(y, sr):
     reduced = nr.reduce_noise(y=y, sr=sr, y_noise=noise_sample)
     return reduced
 
-def segment_audio(y, sr=16000, segment_length=3):
+def segment_audio(y, sr=24000, segment_length=3):
     total_length = segment_length * sr
     if len(y) < total_length:
         y = librosa.util.fix_length(y, total_length)
@@ -35,7 +35,7 @@ def segment_audio(y, sr=16000, segment_length=3):
         y = y[:total_length]
     return y
 
-def preprocess_audio(file_path, sr=16000):
+def preprocess_audio(file_path, sr=24000):
     y, _ = librosa.load(file_path, sr=sr)
     y = bandpass_filter(y, fs=sr)
     y = reduce_noise(y, sr=sr)
@@ -43,7 +43,7 @@ def preprocess_audio(file_path, sr=16000):
 
     return y
 
-def extract_features(y, sr=16000):
+def extract_features(y, sr=24000):
     # 1. MFCC
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
     mfcc_mean = np.mean(mfcc, axis=1)
@@ -87,6 +87,7 @@ def extract_features(y, sr=16000):
 
 class EnsembleSVMInfer:
     def __init__(self, model_dir='weights/saved_model_SVMs'):
+        self.svm_models = []
         for i in range(1, 51):
             model_path = os.path.join(model_dir, f'svm_model_{i}.pth')
             model = joblib.load(model_path)  
@@ -98,23 +99,22 @@ class EnsembleSVMInfer:
         file_path: path to audio file
         Returns True for fake (class 1), False for real (class 0)
         """
-        try:
-            y = preprocess_audio(file_path)
-            features = extract_features(y).reshape(1, -1)
-            
-            proba_list = []
-            for i in range(50):
-                model = self.svm_models[i]
-                subset = self.subsets[i]
-                x_sub = y[:, subset]
-                prob = model.predict_proba(x_sub)[0]  # [prob_class_0, prob_class_1]
-                proba_list.append(prob)
-            avg_proba = np.mean(proba_list, axis=0)  # [mean_prob_0, mean_prob_1]
-            final_label = np.argmax(avg_proba)
-            return final_label == 1
-        except Exception as e:
-            print(f"Error processing {file_path}: {e}")
-            return None
+        y = preprocess_audio(file_path)
+        features = extract_features(y).reshape(1, -1)
+        
+        proba_list = []
+        for i in range(50):
+            model = self.svm_models[i]
+            subset = self.subsets[i]
+            x_sub = features[:, subset]
+            prob = model.predict_proba(x_sub)[0]  # [prob_class_0, prob_class_1]
+            proba_list.append(prob)
+        avg_proba = np.mean(proba_list, axis=0)  # [mean_prob_0, mean_prob_1]
+        final_label = np.argmax(avg_proba)
+        return final_label == 1
+
+        print(f"Error processing {file_path}: {e}")
+        return None
 
 if __name__ == "__main__":
     # Example usage

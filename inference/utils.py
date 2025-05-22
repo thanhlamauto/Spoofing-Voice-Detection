@@ -1,10 +1,10 @@
 import os
 from torch.utils.data import Dataset, DataLoader, Subset
-from .models import LFCCGMMClassifier, MelCNNClassifier, XGBoostClassifier, Wav2Vec2Classifier
-from sklearn.metrics import classification_report
+from .models import LFCCGMMClassifier, MelCNNClassifier, XGBoostClassifier, Wav2Vec2Classifier, EnsembleSVMClassifier
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve
 import random
 from tqdm import tqdm
-
+import numpy as np
 
 class VoiceTestDataset(Dataset):
     """
@@ -40,6 +40,14 @@ def get_test_dataset(fake_dir="dataset/fake", real_dir="dataset/real"):
             datalist.append((os.path.join(real_dir, fname), 0))
     return VoiceTestDataset(datalist)
 
+def compute_eer(y_true, y_scores):
+    fpr, tpr, thresholds = roc_curve(y_true, y_scores)
+    fnr = 1 - tpr
+    # Find the threshold where FPR ~= FNR
+    eer_threshold = thresholds[np.nanargmin(np.absolute((fnr - fpr)))]
+    eer = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
+    return eer, eer_threshold
+
 def test_model(model_name, num_files, batch_size=1):
     """
     Tests the specified model on a subset of the dataset and prints a classification report.
@@ -51,7 +59,8 @@ def test_model(model_name, num_files, batch_size=1):
         'gmm': LFCCGMMClassifier,
         'cnn': MelCNNClassifier,
         'xgboost': XGBoostClassifier,
-        'wav2vec': Wav2Vec2Classifier
+        'wav2vec': Wav2Vec2Classifier,
+        'svm': EnsembleSVMClassifier
     }
 
     if model_name not in model_map:
@@ -72,20 +81,34 @@ def test_model(model_name, num_files, batch_size=1):
     subset = Subset(dataset, indices)
     dataloader = DataLoader(subset, batch_size=batch_size, shuffle=False)
 
-    y_true, y_pred = [], []
+    y_true, y_pred, y_scores = [], [], []
 
     for batch in tqdm(dataloader, desc="Processing batches"):
         file_paths = batch['file_path']
         labels = batch['label']
 
         for file_path, label in tqdm(zip(file_paths, labels), total=len(labels), desc="Processing files", leave=False):
-            pred = model(file_path)
-            pred_label = 1 if pred else 0
+            score = model(file_path)  # Score can be probability or confidence
+            # If model returns boolean, convert to float score
+            if isinstance(score, bool):
+                score = float(score)
+
+            pred_label = 1 if score >= 0.5 else 0
+
             y_true.append(label)
             y_pred.append(pred_label)
+            y_scores.append(score)
 
     print(f"\nClassification Report for model: {model_name}")
     print(classification_report(y_true, y_pred, target_names=["Real", "Fake"]))
+
+    try:
+        auc = roc_auc_score(y_true, y_scores)
+        eer, threshold = compute_eer(y_true, y_scores)
+        print(f"AUC: {auc:.4f}")
+        print(f"EER: {eer:.4f} (Threshold: {threshold:.4f})")
+    except ValueError as e:
+        print(f"Could not compute AUC or EER: {e}")
 
 if __name__ == "__main__":
 

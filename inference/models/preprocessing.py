@@ -132,3 +132,4 @@ def preprocess_audio_melcnn(audio_path, sample_rate=16000, n_mels=128, segment_d
     log_mel_spec = torchaudio.transforms.AmplitudeToDB()(mel_spec)
     log_mel_spec = (log_mel_spec - log_mel_spec.mean()) / (log_mel_spec.std() + 1e-6)
     return log_mel_spec
+

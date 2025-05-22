@@ -3,13 +3,20 @@ import xgboost as xgb
 import os
 import librosa
 import warnings
+import pickle
+import joblib
 
 from .preprocessing import remove_silence, bandpass_filter, normalize_volume, extract_features_xgb
 
 class XGBoostInfer:
-    def __init__(self, model_path='weights/xgboost_model.json'):
+    def __init__(self, model_path='weights/XGBoost/xgboost_model.json', scaler_path='weights/XGBoost/standard_scaler.joblib'):
         self.model = xgb.XGBClassifier()
         self.model.load_model(model_path)
+        # with open(scaler_path, 'rb') as f:
+        #     self.scaler = pickle.load(f)
+        self.scaler = joblib.load(scaler_path)  # Or pipeline.steps[0][1] if using a pipeline
+
+
         # Optionally: you may want to store the feature order if needed
 
     def preprocess(self, file_path):
@@ -24,6 +31,7 @@ class XGBoostInfer:
         features = extract_features_xgb(y, sr)
         # Convert to numpy array in the order of keys
         feature_vector = np.array([features[k] for k in sorted(features.keys())], dtype=np.float32)
+        feature_vector = self.scaler.transform(feature_vector.reshape(1, -1))[0]
         return feature_vector
 
     def forward(self, file_path):
@@ -42,8 +50,8 @@ class XGBoostInfer:
 
 if __name__ == "__main__":
     # Example usage
-    test_file = "dataset/fake/26_496_000021_000003_gen.wav"  # Change to your test file
-    infer = XGBoostInfer(model_path='weights/xgboost_model.json')
+    test_file = "dataset/real/87_121553_000200_000000.wav"  # Change to your test file
+    infer = XGBoostInfer()
     result = infer.forward(test_file)
     if result is None:
         print("Classification failed.")
