@@ -4,7 +4,7 @@ import os
 import librosa
 import warnings
 
-from preprocessing import remove_silence, bandpass_filter, normalize_volume, extract_features_xgb
+from .preprocessing import remove_silence, bandpass_filter, normalize_volume, extract_features_xgb
 
 class XGBoostInfer:
     def __init__(self, model_path='weights/xgboost_model.json'):

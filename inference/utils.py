@@ -3,6 +3,8 @@ from torch.utils.data import Dataset, DataLoader, Subset
 from .models import LFCCGMMClassifier, MelCNNClassifier, XGBoostClassifier, Wav2Vec2Classifier
 from sklearn.metrics import classification_report
 import random
+from tqdm import tqdm
+
 
 class VoiceTestDataset(Dataset):
     """
@@ -56,8 +58,9 @@ def test_model(model_name, num_files, batch_size=1):
         raise ValueError(f"Invalid model name '{model_name}'. Choose from {list(model_map.keys())}")
 
     model = model_map[model_name]()  # instantiate the model
-    if model_name in ['gmm', 'xgboost']:
-        model = model.forward
+    model = model.forward
+
+    print("Model loaded. Ready to predict...")
 
     fake_dir = "dataset/fake"
     real_dir = "dataset/real"
@@ -71,12 +74,12 @@ def test_model(model_name, num_files, batch_size=1):
 
     y_true, y_pred = [], []
 
-    for batch in dataloader:
+    for batch in tqdm(dataloader, desc="Processing batches"):
         file_paths = batch['file_path']
         labels = batch['label']
 
-        for file_path, label in zip(file_paths, labels):
-            pred = model(file_path)  # Assuming model returns True for fake, False for real
+        for file_path, label in tqdm(zip(file_paths, labels), total=len(labels), desc="Processing files", leave=False):
+            pred = model(file_path)
             pred_label = 1 if pred else 0
             y_true.append(label)
             y_pred.append(pred_label)

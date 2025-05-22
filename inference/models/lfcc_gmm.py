@@ -6,7 +6,7 @@ from scipy.stats import skew, kurtosis
 import torchaudio
 import os
 
-from preprocessing import pre_emphasis, peak_normalize, add_noise, chunk_signal, extract_lfcc
+from .preprocessing import pre_emphasis, peak_normalize, add_noise, chunk_signal, extract_lfcc
 
 def extract_gmm_scores(file_path, gmms, sr=24000):
     y, sr = librosa.load(file_path, sr=sr)

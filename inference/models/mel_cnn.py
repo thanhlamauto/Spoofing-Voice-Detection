@@ -6,7 +6,8 @@ from pathlib import Path
 import torchaudio
 import random
 
-from preprocessing import preprocess_audio_melcnn
+from .preprocessing import preprocess_audio_melcnn
+
 
 class CNNModel(nn.Module):
     def __init__(self, in_channels=1, out_classes=2):

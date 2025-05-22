@@ -5,7 +5,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run deepfake voice detection inference.")
 
     parser.add_argument("--model", type=str, required=True,
-                        choices=["gmm", "mel", "xgboost", "wav2vec"],
+                        choices=["gmm", "cnn", "xgboost", "wav2vec"],
                         help="Model name to test.")
     parser.add_argument("--num_files", type=int, default=16,
                         help="Number of files to test.")
