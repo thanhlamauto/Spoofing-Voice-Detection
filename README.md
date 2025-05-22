@@ -28,13 +28,13 @@ This dataset provides a collection of genuine and spoofed voice samples, essenti
 
 1. **Method 1: [MFCC + SVM]**
 
-2. **Method 2: [CNN-based approach]**
+2. **Method 2: [MFCC + XGBoost]**
 
-3. **Method 3: [Spectrogram analysis with RNN]**
+3. **Method 3: [LFCC + GMM + XGBoost]**
 
-4. **Method 4: [ Deep learning with raw audio]**
+4. **Method 4: [CNN-based approach]**
 
-5. **Method 5: [Feature engineering with GMM]**
+5. **Method 5: [Attention-based (wave2vec2)]**
    )
 
 ## Getting Started
