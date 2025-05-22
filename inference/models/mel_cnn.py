@@ -6,23 +6,7 @@ from pathlib import Path
 import torchaudio
 import random
 
-def preprocess_audio(audio_path, sample_rate=16000, n_mels=128, segment_duration=4):
-    waveform, _ = torchaudio.load(audio_path, normalize=True)
-    waveform = waveform.mean(dim=0).unsqueeze(0)  # Make mono if stereo
-
-    num_frames = waveform.size(1)
-    segment_length = int(segment_duration * sample_rate)
-    if num_frames > segment_length:
-        start_frame = random.randint(0, num_frames - segment_length)
-        waveform = waveform[:, start_frame:start_frame + segment_length]
-
-    mel_spec = torchaudio.transforms.MelSpectrogram(
-        sample_rate=sample_rate, n_fft=800, hop_length=160,
-        win_length=400, n_mels=n_mels, power=2.0)(waveform)
-
-    log_mel_spec = torchaudio.transforms.AmplitudeToDB()(mel_spec)
-    log_mel_spec = (log_mel_spec - log_mel_spec.mean()) / (log_mel_spec.std() + 1e-6)
-    return log_mel_spec
+from preprocessing import preprocess_audio_melcnn
 
 class CNNModel(nn.Module):
     def __init__(self, in_channels=1, out_classes=2):
@@ -70,7 +54,7 @@ class MelCNNClassifier:
 
     def forward(self, audio_path):
         try:
-            mel_spec = preprocess_audio(audio_path)
+            mel_spec = preprocess_audio_melcnn(audio_path)
             mel_spec = mel_spec.unsqueeze(0).to(self.device)
             with torch.no_grad():
                 output = self.model(mel_spec)
