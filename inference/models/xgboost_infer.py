@@ -14,7 +14,7 @@ class XGBoostInfer:
         self.model.load_model(model_path)
         # with open(scaler_path, 'rb') as f:
         #     self.scaler = pickle.load(f)
-        self.scaler = joblib.load(scaler_path)  # Or pipeline.steps[0][1] if using a pipeline
+        # self.scaler = joblib.load(scaler_path)  # Or pipeline.steps[0][1] if using a pipeline
 
 
         # Optionally: you may want to store the feature order if needed
@@ -30,8 +30,8 @@ class XGBoostInfer:
         y = normalize_volume(y, desired_rms=0.05)
         features = extract_features_xgb(y, sr)
         # Convert to numpy array in the order of keys
-        feature_vector = np.array([features[k] for k in sorted(features.keys())], dtype=np.float32)
-        feature_vector = self.scaler.transform(feature_vector.reshape(1, -1))[0]
+        feature_vector = np.array([features[k] for k in features.keys()], dtype=np.float32)
+        # feature_vector = self.scaler.transform(feature_vector.reshape(1, -1))[0]
         return feature_vector
 
     def forward(self, file_path):
@@ -43,7 +43,7 @@ class XGBoostInfer:
             features = self.preprocess(file_path)
             features = features.reshape(1, -1)
             pred = self.model.predict(features)
-            return bool(pred[0] == 1)
+            return bool(pred[0] == 0)
         except Exception as e:
             print(f"Error processing {file_path}: {e}")
             return None

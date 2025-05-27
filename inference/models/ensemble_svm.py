@@ -30,7 +30,7 @@ def reduce_noise(y, sr):
 def segment_audio(y, sr=24000, segment_length=3):
     total_length = segment_length * sr
     if len(y) < total_length:
-        y = librosa.util.fix_length(y, total_length)
+        y = librosa.util.fix_length(data=y, size=total_length)
     elif len(y) > total_length:
         y = y[:total_length]
     return y

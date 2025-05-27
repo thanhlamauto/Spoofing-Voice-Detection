@@ -7,7 +7,10 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, required=True,
                         choices=["gmm", "cnn", "xgboost", "wav2vec", "svm"],
                         help="Model name to test.")
-    parser.add_argument("--num_files", type=int, default=16,
+    parser.add_argument("--dataset", type=str, required=True,
+                        choices=["librisevoc", "asvspoof"],
+                        help="Dataset name to test.")
+    parser.add_argument("--num_files", type=int, default=1000,
                         help="Number of files to test.")
     parser.add_argument("--batch_size", type=int, default=8,
                         help="Batch size for DataLoader.")
@@ -17,6 +20,7 @@ if __name__ == "__main__":
 
     test_model(
         model_name=args.model,
+        dataset=args.dataset,
         num_files=args.num_files,
         batch_size=args.batch_size
     )
