@@ -8,17 +8,19 @@ Our group has explored and implemented five distinct approaches to tackle this c
 
 The repository is organized to facilitate easy navigation and understanding of the project components:
 
-* **`train/`**: This directory contains the scripts and configurations used for training each of the five detection models. Each method's training code is located here.
+- **`train/`**: This directory contains the scripts and configurations used for training each of the five detection models. Each method's training code is located here.
 
-* **`weights/`**: This folder stores the trained model weights and checkpoints for each of the five implemented methods. These pre-trained models can be used for direct inference without retraining.
+- **`weights/`**: This folder stores the trained model weights and checkpoints for each of the five implemented methods. These pre-trained models can be used for direct inference without retraining.
 
-* **`infer/`**: This directory houses the inference scripts for each detection method. These scripts demonstrate how to load the trained models and use them to classify new audio samples as genuine or spoofed.
+- **`infer/`**: This directory houses the inference scripts for each detection method. These scripts demonstrate how to load the trained models and use them to classify new audio samples as genuine or spoofed.
 
 ## Dataset
 
 The dataset used for training and evaluating our spoofing voice detection models is sourced from Kaggle:
 
 [**LibriSEVOC Dataset**](https://www.kaggle.com/datasets/trinhhaphuong/librisevoc)
+[**ASVSpoof 2021**](https://zenodo.org/records/4835108)
+[**Testing dataset**](https://www.kaggle.com/datasets/ronanhansel/testing-dataset-deefake-detector)
 
 This dataset provides a collection of genuine and spoofed voice samples, essential for developing and testing robust detection algorithms. Please download and extract the dataset into a designated `data/` directory (or link it appropriately) within your project environment before running the training or inference scripts.
 
@@ -42,7 +44,6 @@ This dataset provides a collection of genuine and spoofed voice samples, essenti
 To set up and run the project locally, follow these steps:
 
 1. **Clone the repository:**
-
 
 ## Inference
 
