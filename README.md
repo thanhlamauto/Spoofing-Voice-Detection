@@ -49,11 +49,11 @@ To set up and run the project locally, follow these steps:
 
 🔧 Command Format
 
-python infer.py --model <model_name> --num_files <N> --batch_size <B>
+python infer.py --model <model_name> --dataset <dataset_name> --num_files <N> --batch_size <B>
 
 ✅ Example
 
-python infer.py --model xgboost --num_files 32 --batch_size 8
+python infer.py --model xgboost --dataset librisevoc --num_files 32 --batch_size 8
 
 🧠 Model Options
 
@@ -64,6 +64,11 @@ python infer.py --model xgboost --num_files 32 --batch_size 8
 3. xgboost – XGBoost-based classifier
 
 4. wav2vec – Pretrained Wav2Vec2 model
+
+✅ Dataset Options
+
+1. librisevoc
+2. asvspoof
 
 📌 Notes
 
