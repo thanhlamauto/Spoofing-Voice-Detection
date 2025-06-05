@@ -129,6 +129,27 @@ def test_model(model_name, dataset, num_files, batch_size=1):
     except ValueError as e:
         print(f"Could not compute AUC or EER: {e}")
 
+def infer_single_file(file_path, model_name='wav2vec'):
+    """
+    Infers a single file using the specified model.
+    :param model_name: str, one of ['gmm', 'cnn', 'xgboost', 'wav2vec']
+    :param file_path: str, path to the audio file
+    :return: bool, True if fake, False if real
+    """
+    model_map = {
+        'gmm': LFCCGMMClassifier,
+        'cnn': MelCNNClassifier,
+        'xgboost': XGBoostClassifier,
+        'wav2vec': Wav2Vec2Classifier,
+        'svm': EnsembleSVMClassifier
+    }
+
+    if model_name not in model_map:
+        raise ValueError(f"Invalid model name '{model_name}'. Choose from {list(model_map.keys())}")
+
+    model = model_map[model_name]()  # instantiate the model
+    return model.forward(file_path)
+
 
 if __name__ == "__main__":
 

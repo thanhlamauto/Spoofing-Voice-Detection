@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt5.QtGui import QPixmap, QPalette, QBrush
 from MyModule.mainPage import Ui_MainWindow
-from MyModule.SyntherticVoiceDetector import Make_Prediction
+from inference import infer_single_file
 import numpy as np
 import random
 
@@ -32,7 +32,7 @@ class AudioFileBrowser(QMainWindow):
         self.hide_progressbar()
         
     def detectFakeAudio(self, filepath):
-        Percentage = 100.0 - (int(round( float(Make_Prediction(filepath)) * 10000 ))) / 100.0
+        Percentage = 100.0 - (int(round( float(infer_single_file(filepath)) * 10000 ))) / 100.0
         Message = ""
         
         if Percentage > 50:
